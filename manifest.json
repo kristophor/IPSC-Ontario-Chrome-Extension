@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "IPSC Ontario Better UX Extension",
+    "version": "1.0",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://reg.ipsc-ont.org/*"
+            ],
+            "js": [
+                "lib/jquery.min.js",
+                "lib/bootstrap/js/bootstrap.bundle.min.js",
+                "lib/DataTables/js/jquery.dataTables.min.js",
+                "lib/bootstrapTable/bootstrap-table.min.js",
+                "utils/matchTable.js",
+                "content.js"
+            ],
+            "css": [
+                "lib/DataTables/js/jquery.dataTables.min.js",
+                "lib/bootstrapTable/bootstrap-table.min.css"
+            ]
+        }
+    ]
+}
