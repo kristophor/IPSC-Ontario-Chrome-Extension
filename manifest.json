@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "IPSC Ontario Better UX Extension",
+    "name": "TP UX for IPSC Ontario",
     "version": "1.0",
     "icons": {
         "16": "icon.png",
