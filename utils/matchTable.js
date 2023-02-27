@@ -1,10 +1,11 @@
-function watchMatchTime(){
+function watchMatchTime() {
   // Define the colors we'll use for different states
   const colors = {
     upcoming: 'default',
-    approaching: 'orange',
-    past: 'blue',
-    registered: 'default'
+    approaching: 'light-orange',
+    past: 'light-blue',
+    registered: 'default',
+    default: 'default'
   };
 
   // Helper function to convert a string like "Sat, Mar 04 20:00" to a Date object
@@ -17,7 +18,7 @@ function watchMatchTime(){
 
   // Helper function to format a Date object as "Sat, Mar 04 20:00"
   function formatMatchTime(matchTime) {
-    const options = {weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'};
+    const options = { weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' };
     return matchTime.toLocaleString('en-US', options).replace(',', '');
   }
 
@@ -26,7 +27,7 @@ function watchMatchTime(){
   const timeThresholdPast = -timeThresholdApproaching;
   const now = new Date();
   console.log('start finding match time')
-  $('tr').each(function() {
+  $('tr').each(function () {
     const $row = $(this);
     const $timeCell = $row.find('td:nth-child(5)');
     const timeString = $timeCell.text().trim().replace('Opens: ', '');
@@ -36,7 +37,9 @@ function watchMatchTime(){
     let color = colors.upcoming;
     if ($row.find('registered').length) {
       color = colors.registered;
-    } else if (now >= matchTime) {
+    } else if ($row.find('Canceled').length) {
+      color = colors.default;
+    }else if (now >= matchTime) {
       color = colors.past;
     } else if (matchTime - now <= timeThresholdApproaching) {
       color = colors.approaching;
@@ -52,7 +55,7 @@ function watchMatchTime(){
 }
 function initializeFutureMatchesTable() {
   const matchFutureTable = $("#matchesFuture");
-  if(matchFutureTable === null) {
+  if (matchFutureTable === null) {
     return;
   }
   matchFutureTable.addClass("table table-striped");
@@ -60,9 +63,9 @@ function initializeFutureMatchesTable() {
   matchFutureTableHeader.addClass("fw-bold");
 
   const tableBodyRows = matchFutureTable.find("tbody tr");
-  tableBodyRows.each(function() {
+  tableBodyRows.each(function () {
     const cells = $(this).find("td");
-    cells.each(function() {
+    cells.each(function () {
       if ($(this).text().trim() === "") {
         $(this).remove();
       }
@@ -70,7 +73,7 @@ function initializeFutureMatchesTable() {
   });
 
   matchFutureTable.bootstrapTable({
-    search: true, 
+    search: true,
     pagination: false,
     pageSize: 99999,
     columns: [{
@@ -93,7 +96,7 @@ function initializeFutureMatchesTable() {
       field: 'registration',
       title: 'Registration'
     }],
-    data: tableBodyRows.map(function(index, row) {
+    data: tableBodyRows.map(function (index, row) {
       const cells = $(row).find('td');
       return {
         date: $(cells[0]).html(),
@@ -104,60 +107,60 @@ function initializeFutureMatchesTable() {
       };
     }).get()
   });
+}
+
+function initializePastMatchesTable() {
+  const matchPastTable = $("#matchesPast");
+  if (matchPastTable === null) {
+    return;
   }
-  
-  function initializePastMatchesTable() {
-    const matchPastTable = $("#matchesPast");
-    if(matchPastTable === null) {
-      return;
-    }
-    matchPastTable.addClass("table table-striped");
-    const matchPastTableHeader = matchPastTable.find("th");
-    matchPastTableHeader.addClass("fw-bold");
-  
-    const tableBodyRows = matchPastTable.find("tbody tr");
-    tableBodyRows.each(function() {
-      const cells = $(this).find("td");
-      cells.each(function() {
-        if ($(this).text().trim() === "") {
-          $(this).remove();
-        }
-      });
+  matchPastTable.addClass("table table-striped");
+  const matchPastTableHeader = matchPastTable.find("th");
+  matchPastTableHeader.addClass("fw-bold");
+
+  const tableBodyRows = matchPastTable.find("tbody tr");
+  tableBodyRows.each(function () {
+    const cells = $(this).find("td");
+    cells.each(function () {
+      if ($(this).text().trim() === "") {
+        $(this).remove();
+      }
     });
-  
-    matchPastTable.bootstrapTable({
-      search: true, 
-      pagination: false,
-      pageSize: 99999,
-      columns: [{
-        field: 'date',
-        title: 'Date',
-        sortable: true
-      }, {
-        field: 'event',
-        title: 'Event',
-        sortable: true
-      }, {
-        field: 'club',
-        title: 'Club',
-        sortable: true
-      }, {
-        field: 'name',
-        title: 'Name',
-        sortable: true
-      }, {
-        field: 'results',
-        title: 'Results'
-      }],
-      data: tableBodyRows.map(function(index, row) {
-        const cells = $(row).find('td');
-        return {
-          date: $(cells[0]).html(),
-          event: $(cells[1]).html(),
-          club: $(cells[2]).html(),
-          name: $(cells[3]).html(),
-          results: $(cells[4]).html(),
-        };
-      }).get()
-    });
-  }
+  });
+
+  matchPastTable.bootstrapTable({
+    search: true,
+    pagination: false,
+    pageSize: 99999,
+    columns: [{
+      field: 'date',
+      title: 'Date',
+      sortable: true
+    }, {
+      field: 'event',
+      title: 'Event',
+      sortable: true
+    }, {
+      field: 'club',
+      title: 'Club',
+      sortable: true
+    }, {
+      field: 'name',
+      title: 'Name',
+      sortable: true
+    }, {
+      field: 'results',
+      title: 'Results'
+    }],
+    data: tableBodyRows.map(function (index, row) {
+      const cells = $(row).find('td');
+      return {
+        date: $(cells[0]).html(),
+        event: $(cells[1]).html(),
+        club: $(cells[2]).html(),
+        name: $(cells[3]).html(),
+        results: $(cells[4]).html(),
+      };
+    }).get()
+  });
+}
