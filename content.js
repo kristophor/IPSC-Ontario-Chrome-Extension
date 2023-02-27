@@ -1,6 +1,6 @@
 // Load required scripts and stylesheets
 loadStylesheets([
-    // "lib/bootstrap/css/bootstrap.min.css",
+    "lib/bootstrap/css/bootstrap.min.css",
     "lib/bootstrapTable/bootstrap-table.min.css"
   ]);
 
@@ -9,17 +9,19 @@ loadScripts([
     "lib/jquery.min.js",
     "lib/bootstrapTable/js/bootstrap-table.min.js",
     "utils/matchTable.js",
-    "utils/timewidget.js"
+    "utils/timewidget.js",
+    "utils/navbar.js"
   ]);
   
   // When the DOM is ready, initialize tables
   $(document).ready(function() {
-    // removeStylesheets(["/registration/style/menubar.css"]);
+    removeStylesheets(["/registration/style/menubar.css"]);
     initializeFutureMatchesTable();
     initializePastMatchesTable();
     watchMatchTime();
+    replaceDropdownWithNavbar();
     addClock();
-    // replaceDropdownWithNavbar();
+    replaceLogout();
   });
   
   function loadScripts(urls) {
@@ -48,3 +50,4 @@ loadScripts([
       }
     });
   }
+

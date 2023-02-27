@@ -19,9 +19,11 @@
                 "lib/bootstrapTable/bootstrap-table.min.js",
                 "utils/matchTable.js",
                 "utils/timewidget.js",
+                "utils/navbar.js",
                 "content.js"
             ],
             "css": [
+                "lib/bootstrap/css/bootstrap.min.css",
                 "lib/bootstrapTable/bootstrap-table.min.css"
             ]
         }

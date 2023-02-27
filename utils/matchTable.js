@@ -11,7 +11,7 @@ function watchMatchTime(){
   function parseMatchTime(timeString) {
     const matchTime = new Date(timeString);
     matchTime.setFullYear(new Date().getFullYear()); // assume the match is in the current year
-    console.log(matchTime)
+    // console.log(matchTime)
     return matchTime;
   }
 
@@ -25,16 +25,16 @@ function watchMatchTime(){
   const timeThresholdApproaching = 60 * 60 * 1000; // 1 hour
   const timeThresholdPast = -timeThresholdApproaching;
   const now = new Date();
-
-  $('tr.status').each(function() {
+  console.log('start finding match time')
+  $('tr').each(function() {
     const $row = $(this);
     const $timeCell = $row.find('td:nth-child(5)');
     const timeString = $timeCell.text().trim().replace('Opens: ', '');
     const matchTime = parseMatchTime(timeString);
-
+    // console.log(now, matchTime)
     // Determine the color based on the match time and registration status
     let color = colors.upcoming;
-    if ($row.find('a[href*="/registration/register/"]').length) {
+    if ($row.find('registered').length) {
       color = colors.registered;
     } else if (now >= matchTime) {
       color = colors.past;
@@ -46,7 +46,7 @@ function watchMatchTime(){
     $row.removeClass(Object.values(colors).join(' ')).addClass(color);
 
     // Update the time display
-    $timeCell.text('Opens: ' + formatMatchTime(matchTime));
+    // $timeCell.text('Opens: ' + formatMatchTime(matchTime));
   });
 
 }
@@ -92,9 +92,6 @@ function initializeFutureMatchesTable() {
     }, {
       field: 'registration',
       title: 'Registration'
-    }, {
-      field: 'status',
-      title: 'Status'
     }],
     data: tableBodyRows.map(function(index, row) {
       const cells = $(row).find('td');
@@ -104,7 +101,6 @@ function initializeFutureMatchesTable() {
         club: $(cells[2]).html(),
         name: $(cells[3]).html(),
         registration: $(cells[4]).html(),
-        status: $(cells[5]).html(),
       };
     }).get()
   });
