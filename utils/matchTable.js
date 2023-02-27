@@ -1,27 +1,120 @@
-function initializeFutureMatchesTable() {
-    const matchesFutureTable = document.getElementById("matchesFuture");
-  
-    matchesFutureTable.classList.add("table", "table-striped");
-    const tableHeaders = matchesFutureTable.getElementsByTagName("th");
-    for (let i = 0; i < tableHeaders.length; i++) {
-      tableHeaders[i].classList.add("fw-bold");
+function watchMatchTime(){
+  // Define the colors we'll use for different states
+  const colors = {
+    upcoming: 'default',
+    approaching: 'orange',
+    past: 'blue',
+    registered: 'default'
+  };
+
+  // Helper function to convert a string like "Sat, Mar 04 20:00" to a Date object
+  function parseMatchTime(timeString) {
+    const matchTime = new Date(timeString);
+    matchTime.setFullYear(new Date().getFullYear()); // assume the match is in the current year
+    console.log(matchTime)
+    return matchTime;
+  }
+
+  // Helper function to format a Date object as "Sat, Mar 04 20:00"
+  function formatMatchTime(matchTime) {
+    const options = {weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'};
+    return matchTime.toLocaleString('en-US', options).replace(',', '');
+  }
+
+  // Main code
+  const timeThresholdApproaching = 60 * 60 * 1000; // 1 hour
+  const timeThresholdPast = -timeThresholdApproaching;
+  const now = new Date();
+
+  $('tr.status').each(function() {
+    const $row = $(this);
+    const $timeCell = $row.find('td:nth-child(5)');
+    const timeString = $timeCell.text().trim().replace('Opens: ', '');
+    const matchTime = parseMatchTime(timeString);
+
+    // Determine the color based on the match time and registration status
+    let color = colors.upcoming;
+    if ($row.find('a[href*="/registration/register/"]').length) {
+      color = colors.registered;
+    } else if (now >= matchTime) {
+      color = colors.past;
+    } else if (matchTime - now <= timeThresholdApproaching) {
+      color = colors.approaching;
     }
-    $(matchesFutureTable).DataTable({
-      searching: true,
-      lengthMenu: [[-1], ["All"]],
-      order: [[0, "asc"]],
-      columnDefs: [
-        {
-          targets: "_all",
-          searchable: true,
-          orderable: true
-        }
-      ]
+
+    // Apply the color to the row
+    $row.removeClass(Object.values(colors).join(' ')).addClass(color);
+
+    // Update the time display
+    $timeCell.text('Opens: ' + formatMatchTime(matchTime));
+  });
+
+}
+function initializeFutureMatchesTable() {
+  const matchFutureTable = $("#matchesFuture");
+  if(matchFutureTable === null) {
+    return;
+  }
+  matchFutureTable.addClass("table table-striped");
+  const matchFutureTableHeader = matchFutureTable.find("th");
+  matchFutureTableHeader.addClass("fw-bold");
+
+  const tableBodyRows = matchFutureTable.find("tbody tr");
+  tableBodyRows.each(function() {
+    const cells = $(this).find("td");
+    cells.each(function() {
+      if ($(this).text().trim() === "") {
+        $(this).remove();
+      }
     });
+  });
+
+  matchFutureTable.bootstrapTable({
+    search: true, 
+    pagination: false,
+    pageSize: 99999,
+    columns: [{
+      field: 'date',
+      title: 'Date',
+      sortable: true
+    }, {
+      field: 'event',
+      title: 'Event',
+      sortable: true
+    }, {
+      field: 'club',
+      title: 'Club',
+      sortable: true
+    }, {
+      field: 'name',
+      title: 'Name',
+      sortable: true
+    }, {
+      field: 'registration',
+      title: 'Registration'
+    }, {
+      field: 'status',
+      title: 'Status'
+    }],
+    data: tableBodyRows.map(function(index, row) {
+      const cells = $(row).find('td');
+      return {
+        date: $(cells[0]).html(),
+        event: $(cells[1]).html(),
+        club: $(cells[2]).html(),
+        name: $(cells[3]).html(),
+        registration: $(cells[4]).html(),
+        status: $(cells[5]).html(),
+      };
+    }).get()
+  });
   }
   
   function initializePastMatchesTable() {
     const matchPastTable = $("#matchesPast");
+    if(matchPastTable === null) {
+      return;
+    }
     matchPastTable.addClass("table table-striped");
     const matchPastTableHeader = matchPastTable.find("th");
     matchPastTableHeader.addClass("fw-bold");
@@ -38,20 +131,24 @@ function initializeFutureMatchesTable() {
   
     matchPastTable.bootstrapTable({
       search: true, 
-      pagination: true,
+      pagination: false,
       pageSize: 99999,
       columns: [{
         field: 'date',
-        title: 'Date'
+        title: 'Date',
+        sortable: true
       }, {
         field: 'event',
-        title: 'Event'
+        title: 'Event',
+        sortable: true
       }, {
         field: 'club',
-        title: 'Club'
+        title: 'Club',
+        sortable: true
       }, {
         field: 'name',
-        title: 'Name'
+        title: 'Name',
+        sortable: true
       }, {
         field: 'results',
         title: 'Results'

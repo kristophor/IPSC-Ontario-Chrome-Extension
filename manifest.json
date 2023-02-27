@@ -16,13 +16,12 @@
             "js": [
                 "lib/jquery.min.js",
                 "lib/bootstrap/js/bootstrap.bundle.min.js",
-                "lib/DataTables/js/jquery.dataTables.min.js",
                 "lib/bootstrapTable/bootstrap-table.min.js",
                 "utils/matchTable.js",
+                "utils/timewidget.js",
                 "content.js"
             ],
             "css": [
-                "lib/DataTables/css/jquery.dataTables.min.css",
                 "lib/bootstrapTable/bootstrap-table.min.css"
             ]
         }
