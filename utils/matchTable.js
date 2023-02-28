@@ -43,7 +43,7 @@ function initializeFutureMatchesTable() {
       title: 'Registration'
     },{
       field: ' ',
-      title: 'favorite'
+      title: 'Watch'
     }],
     data: tableBodyRows.map(function (index, row) {
       const cells = $(row).find('td');
