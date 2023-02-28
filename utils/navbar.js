@@ -51,7 +51,7 @@ function replaceDropdownWithNavbar(){
     if ($parent.length === 0) {
         $parent = $("body").find("h3:first");
     }
-    console.log($parent)
+    if ($parent.length ===0) return
     var $secondDiv = $parent.find('div:contains("Logout")');
 
     // Extract the logout URL from the script
