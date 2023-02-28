@@ -6,6 +6,7 @@ loadStylesheets([
 ]);
 
 loadScripts([
+  "lib/crypto.js",
   "lib/bootstrap/js/bootstrap.bundle.min.js",
   "lib/jquery.min.js",
   "lib/bootstrapTable/js/bootstrap-table.min.js",
@@ -19,12 +20,21 @@ $(document).ready(function () {
   removeStylesheets(["/registration/style/menubar.css"]);
   initializeFutureMatchesTable();
   initializePastMatchesTable();
-  watchMatchTime();
   replaceDropdownWithNavbar();
   addClock();
   replaceLogout();
   addWatchButton();
   addTabs();
+
+  const matchFutureTable = $("#matchesFuture");
+  matchFutureTable.on('sort.bs.table search.bs.table', function () {
+    console.log('sorted or searched')
+    // Remove watch buttons from previous search
+    matchFutureTable.find('.unwatch-button').remove();
+  
+    // Add watch buttons to new search
+    addWatchButton();
+  });
 });
 
 function loadScripts(urls) {

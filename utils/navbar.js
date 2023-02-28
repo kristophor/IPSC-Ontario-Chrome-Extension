@@ -44,8 +44,15 @@ function replaceDropdownWithNavbar(){
 
   function replaceLogout(){
     const $navbar = $('.navbar');
-    var $header = $('header');
-    var $secondDiv = $header.find('div:contains("Logout")');
+    var $parent = $('header');
+    if ($parent.length===0) {
+        $parent = $('.ui-widget');
+    }
+    if ($parent.length === 0) {
+        $parent = $("body").find("h3:first");
+    }
+    console.log($parent)
+    var $secondDiv = $parent.find('div:contains("Logout")');
 
     // Extract the logout URL from the script
     var logoutScript = $secondDiv.find('script').text();
@@ -90,6 +97,14 @@ function replaceDropdownWithNavbar(){
     var $watchedTab = $("<li>").addClass("nav-item").appendTo($ul);
     var $watchedLinkTab = $("<a>").addClass("nav-link").attr("href", "#").text("Watched Events").appendTo($watchedTab);
 
+    var $registeredTab = $("<li>").addClass("nav-item").appendTo($ul);
+    var $registeredLinkTab = $("<a>").addClass("nav-link").attr("href", "#registered").text("Registered Events").appendTo($registeredTab);
+
+    var $registeredModal = $("<div>").addClass("modal fade").appendTo("body");
+    var $registeredModalDialog = $("<div>").addClass("modal-dialog modal-lg").appendTo($registeredModal);
+    var $registeredModalContent = $("<div>").addClass("modal-content").appendTo($registeredModalDialog);
+
+
     // Replace the original h3 element with the new ul element
     // $upcomingEvents.replaceWith($ul);
 
@@ -105,6 +120,49 @@ function replaceDropdownWithNavbar(){
     $pastLinkTab.click(function () {
         window.location.href = $(this).attr("href");
     });
+    $registeredLinkTab.click(function () {
+        // Create the modal dialog
+        $registeredModalContent.empty();
+    
+        // Add a header to the modal dialog
+        var $registeredModalHeader = $("<div>").addClass("modal-header").appendTo($registeredModalContent);
+        $("<h5>").addClass("modal-title").text("Registered Events").appendTo($registeredModalHeader);
+        var $registeredCloseButton = $("<button>").addClass("btn-close").attr("type", "button").attr("data-bs-dismiss", "modal").appendTo($registeredModalHeader);
+    
+        // Add a body to the modal dialog
+        var $registeredModalBody = $("<div>").addClass("modal-body").appendTo($registeredModalContent);
+    
+        // Select the table and iterate over each row
+        var $registeredTable = $("<table>").addClass("table table-striped").appendTo($registeredModalBody);
+        var $registeredTableHead = $("<thead>").appendTo($registeredTable);
+        var $registeredTableHeaderRow = $("<tr>").appendTo($registeredTableHead);
+        $("<th>").text("Date").appendTo($registeredTableHeaderRow);
+        $("<th>").text("Event").appendTo($registeredTableHeaderRow);
+        $("<th>").text("Club").appendTo($registeredTableHeaderRow);
+        $("<th>").text("Name").appendTo($registeredTableHeaderRow);
+        $("<th>").text("Registration").appendTo($registeredTableHeaderRow);
+    
+        var $registeredTableBody = $("<tbody>").appendTo($registeredTable);
+    
+        $("#matchesFuture tbody tr.registered").each(function () {
+            var $row = $(this);
+            var $cells = $row.find("td");
+            var $newRow = $("<tr>").appendTo($registeredTableBody);
+            $("<td>").text($($cells[0]).text().trim()).appendTo($newRow);
+            $("<td>").text($($cells[1]).text().trim()).appendTo($newRow);
+            $("<td>").text($($cells[2]).text().trim()).appendTo($newRow);
+            $("<td>").text($($cells[3]).text().trim()).appendTo($newRow);
+            $("<td>").html($($cells[4]).html().trim()).appendTo($newRow);
+        });
+    
+        $registeredModal.modal("show");
+    
+        $('.modal-backdrop').remove();
+        // Remove the modal dialog from the DOM when it is closed
+        $registeredModal.on("hidden.bs.modal", function () {
+            $(this).remove();
+        });
+    });
 
     $watchedLinkTab.click(function () {
         // Create the modal dialog
@@ -113,26 +171,32 @@ function replaceDropdownWithNavbar(){
         var $modalContent = $("<div>").addClass("modal-content").appendTo($modalDialog);
       
         // Create a table element to hold the watched match data
-        var $table = $("<table>").addClass("table table-striped").appendTo($modalContent);
+        var $table = $("<table>").addClass("table table-striped").attr('name', 'watchedTable').appendTo($modalContent);
         var $thead = $("<thead>").appendTo($table);
         var $tr = $("<tr>").appendTo($thead);
         $("<th>").text("Date").appendTo($tr);
         $("<th>").text("Event").appendTo($tr);
         $("<th>").text("Club").appendTo($tr);
         $("<th>").text("Name").appendTo($tr);
+        $("<th>").text("Registration").appendTo($tr);
+        $("<th>").text("Watch").appendTo($tr);
       
         var $tbody = $("<tbody>").appendTo($table);
       
         // Load the watched matches from storage and add them to the table
         chrome.storage.sync.get("watchedMatches", function (data) {
+            console.log(data)
           var watchedMatches = data.watchedMatches || [];
-      
+          console.log(watchedMatches)
           watchedMatches.forEach(function (match) {
             var $row = $("<tr>").appendTo($tbody);
             $("<td>").text(match.date).appendTo($row);
             $("<td>").text(match.event).appendTo($row);
             $("<td>").text(match.club).appendTo($row);
             $("<td>").text(match.name).appendTo($row);
+            $("<td>").html(match.registration).appendTo($row);
+            $("<td>").html('<button type="button" class="btn btn-danger unwatch-button" data-id="' 
+                + match.id + '">Unwatch</button></td>').appendTo($row);
           });
         });
       
@@ -153,8 +217,27 @@ function replaceDropdownWithNavbar(){
         // Remove the modal dialog from the DOM when it is closed
         $modal.on("hidden.bs.modal", function () {
           $(this).remove();
+          location.reload();
         });
       });
+    $(document).on('click', '.unwatch-button', function(event) {
+        var matchId = $(this).data('id');
+        console.log(matchId)
+        chrome.storage.sync.get('watchedMatches', function (result) {
+            var watchedMatches = result.watchedMatches || [];
+            var matchIndex = watchedMatches.findIndex(function (match) {
+                return match.id === matchId;
+            });
+        
+            if (matchIndex !== -1) {
+                watchedMatches.splice(matchIndex, 1);
+                chrome.storage.sync.set({ watchedMatches: watchedMatches }, function () {
+                    console.log('Match removed from watched matches:', matchId);
+                });
+                $(event.target).closest('tr').remove();
+            }
+        });
+    });
     // Highlight the active tab
     if (window.location.pathname === baseUrl && !window.location.search) {
         $upcomingLinkTab.addClass("active");

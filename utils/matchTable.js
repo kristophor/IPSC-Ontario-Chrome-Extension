@@ -1,58 +1,3 @@
-function watchMatchTime() {
-  // Define the colors we'll use for different states
-  const colors = {
-    upcoming: 'default',
-    approaching: 'light-orange',
-    past: 'light-blue',
-    registered: 'default',
-    default: 'default'
-  };
-
-  // Helper function to convert a string like "Sat, Mar 04 20:00" to a Date object
-  function parseMatchTime(timeString) {
-    const matchTime = new Date(timeString);
-    matchTime.setFullYear(new Date().getFullYear()); // assume the match is in the current year
-    // console.log(matchTime)
-    return matchTime;
-  }
-
-  // Helper function to format a Date object as "Sat, Mar 04 20:00"
-  function formatMatchTime(matchTime) {
-    const options = { weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-    return matchTime.toLocaleString('en-US', options).replace(',', '');
-  }
-
-  // Main code
-  const timeThresholdApproaching = 60 * 60 * 1000; // 1 hour
-  const timeThresholdPast = -timeThresholdApproaching;
-  const now = new Date();
-  console.log('start finding match time')
-  $('tr').each(function () {
-    const $row = $(this);
-    const $timeCell = $row.find('td:nth-child(5)');
-    const timeString = $timeCell.text().trim().replace('Opens: ', '');
-    const matchTime = parseMatchTime(timeString);
-    // console.log(now, matchTime)
-    // Determine the color based on the match time and registration status
-    let color = colors.upcoming;
-    if ($row.find('registered').length) {
-      color = colors.registered;
-    } else if ($row.find('Canceled').length) {
-      color = colors.default;
-    } else if (now >= matchTime) {
-      color = colors.past;
-    } else if (matchTime - now <= timeThresholdApproaching) {
-      color = colors.approaching;
-    }
-
-    // Apply the color to the row
-    $row.removeClass(Object.values(colors).join(' ')).addClass(color);
-
-    // Update the time display
-    // $timeCell.text('Opens: ' + formatMatchTime(matchTime));
-  });
-
-}
 function initializeFutureMatchesTable() {
   const matchFutureTable = $("#matchesFuture");
   $('#matchesFuture').before('<h2>Future Matches</h2>');
@@ -102,14 +47,23 @@ function initializeFutureMatchesTable() {
     }],
     data: tableBodyRows.map(function (index, row) {
       const cells = $(row).find('td');
+      const $row = $(row);
+      $row.attr('data-index', index);
+      $row.attr('data-class', $row.attr('class'));
       return {
         date: $(cells[0]).html(),
         event: $(cells[1]).html(),
         club: $(cells[2]).html(),
         name: $(cells[3]).html(),
         registration: $(cells[4]).html(),
+        class: row.getAttribute('class'),
       };
-    }).get()
+    }).get(),
+    rowStyle :  function(row, index) {
+      return {
+        classes: row.class
+      };
+    }
   });
 }
 
@@ -173,22 +127,45 @@ function initializePastMatchesTable() {
 function addWatchButton() {
   // Select the table and iterate over each row
   $("#matchesFuture tbody tr").each(function () {
+    var $row = $(this);
+
+    // Check if the match is already in the watched list and update the button text and class accordingly
+    chrome.storage.sync.get("watchedMatches", function (data) {
+      var watchedMatches = data.watchedMatches || [];
+      var matchDate = $row.find("td:eq(0)").text().trim();
+        var matchEvent = $row.find("td:eq(1)").text().trim();
+        var matchClub = $row.find("td:eq(2)").text().trim();
+        var matchName = $row.find("td:eq(3)").text().trim();
+      var matchId = CryptoJS.SHA256(matchDate + matchEvent + matchClub + matchName).toString();
+      var matchIndex = watchedMatches.findIndex(function (match) {
+        return match.id === matchId;
+      });
+
+      if (matchIndex !== -1) {
+        // Match found in watched list, so update the button text and class
+        $row.find(".watch-button")
+          .addClass("watch-row")
+          .text("unwatch");
+      }
+    });
+
     // Create a new button element
     var $button = $("<button>")
       .addClass("btn watch-button")
       .text("watch")
       .click(function (event) {
         // Handle button click event here
-        var matchDate = $(this).closest("tr").find("td:eq(0)").text().trim();
-        var matchEvent = $(this).closest("tr").find("td:eq(1)").text().trim();
-        var matchClub = $(this).closest("tr").find("td:eq(2)").text().trim();
-        var matchName = $(this).closest("tr").find("td:eq(3)").text().trim();
-        var matchId = $(this).closest("tr").attr("data-index");
+        var matchDate = $row.find("td:eq(0)").text().trim();
+        var matchEvent = $row.find("td:eq(1)").text().trim();
+        var matchClub = $row.find("td:eq(2)").text().trim();
+        var matchName = $row.find("td:eq(3)").text().trim();
+        var registration = $row.find("td:eq(4)").html().trim();
+
+        var matchId = CryptoJS.SHA256(matchDate + matchEvent + matchClub + matchName).toString();
 
         chrome.storage.sync.get("watchedMatches", function (data) {
           var watchedMatches = data.watchedMatches || [];
 
-          // Check if the match is already in the watched list
           var matchIndex = watchedMatches.findIndex(function (match) {
             return match.id === matchId;
           });
@@ -200,16 +177,18 @@ function addWatchButton() {
               event: matchEvent,
               club: matchClub,
               name: matchName,
-              id: matchId,
+              registration: registration,
+              id: matchId
             };
 
             watchedMatches.push(match);
 
             chrome.storage.sync.set({ watchedMatches: watchedMatches }, function () {
-              console.log("Match added to watched matches:", match);
+              console.log("Match added to watched matches:", matchId);
             });
+
             // Update the button text and class
-            $(event.target).addClass("watch-row").text("unwatch")
+            $(event.target).addClass("watch-row").text("unwatch");
           } else {
             // Match found in watched list, so remove it
             watchedMatches.splice(matchIndex, 1);
@@ -217,30 +196,15 @@ function addWatchButton() {
             chrome.storage.sync.set({ watchedMatches: watchedMatches }, function () {
               console.log("Match removed from watched matches:", matchId);
             });
+
             // Update the button text and class
-            $(event.target).removeClass("watch-row").text("watch")
+            $(event.target).removeClass("watch-row").text("watch");
           }
         });
       });
 
-    // Check if the match is already in the watched list and update the button text and class accordingly
-    var matchId = $(this).attr("data-index");
-    chrome.storage.sync.get("watchedMatches", function (data) {
-      var watchedMatches = data.watchedMatches || [];
-
-      var matchIndex = watchedMatches.findIndex(function (match) {
-        return match.id === matchId;
-      });
-
-      if (matchIndex !== -1) {
-        // Match found in watched list, so update the button text and class
-        $button.addClass("watch-row").text("unwatch");
-      }
-    });
-
-    var $lastTd = $(this).find('td:last');
+    var $lastTd = $(this).find("td:last");
     // Append the button to a new td element and append the td to the current row
-    $lastTd.text('')
-      .append($button);
+    $lastTd.text("").append($button);
   });
 }

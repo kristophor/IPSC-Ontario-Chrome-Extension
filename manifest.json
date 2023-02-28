@@ -11,15 +11,13 @@
     "permissions": [
         "storage"
     ],
-    "background": {
-        "service_worker": "background.js"
-      },
     "content_scripts": [
         {
             "matches": [
                 "https://reg.ipsc-ont.org/*"
             ],
             "js": [
+                "lib/crypto.js",
                 "lib/jquery.min.js",
                 "lib/bootstrap/js/bootstrap.bundle.min.js",
                 "lib/bootstrapTable/bootstrap-table.min.js",
@@ -34,11 +32,5 @@
                 "lib/content.css"
             ]
         }
-    ],
-    "web_accessible_resources": [
-      {
-        "resources": ["watched.html"],
-        "matches": ["https://reg.ipsc-ont.org/*"]
-      }
     ]
 }

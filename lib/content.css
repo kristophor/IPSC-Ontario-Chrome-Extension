@@ -13,3 +13,9 @@
     cursor: pointer;
     font-size: 14px;
   }
+
+  .modal-dialog {
+    width: 85vw !important;
+    max-width: 1090px !important;
+  }
+  
