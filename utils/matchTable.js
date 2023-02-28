@@ -39,7 +39,7 @@ function watchMatchTime() {
       color = colors.registered;
     } else if ($row.find('Canceled').length) {
       color = colors.default;
-    }else if (now >= matchTime) {
+    } else if (now >= matchTime) {
       color = colors.past;
     } else if (matchTime - now <= timeThresholdApproaching) {
       color = colors.approaching;
@@ -55,6 +55,7 @@ function watchMatchTime() {
 }
 function initializeFutureMatchesTable() {
   const matchFutureTable = $("#matchesFuture");
+  $('#matchesFuture').before('<h2>Future Matches</h2>');
   if (matchFutureTable === null) {
     return;
   }
@@ -95,6 +96,9 @@ function initializeFutureMatchesTable() {
     }, {
       field: 'registration',
       title: 'Registration'
+    },{
+      field: ' ',
+      title: 'favorite'
     }],
     data: tableBodyRows.map(function (index, row) {
       const cells = $(row).find('td');
@@ -110,6 +114,7 @@ function initializeFutureMatchesTable() {
 }
 
 function initializePastMatchesTable() {
+  $('#matchesPast').before('<h2>Past Matches</h2>');
   const matchPastTable = $("#matchesPast");
   if (matchPastTable === null) {
     return;
@@ -162,5 +167,80 @@ function initializePastMatchesTable() {
         results: $(cells[4]).html(),
       };
     }).get()
+  });
+}
+
+function addWatchButton() {
+  // Select the table and iterate over each row
+  $("#matchesFuture tbody tr").each(function () {
+    // Create a new button element
+    var $button = $("<button>")
+      .addClass("btn watch-button")
+      .text("watch")
+      .click(function (event) {
+        // Handle button click event here
+        var matchDate = $(this).closest("tr").find("td:eq(0)").text().trim();
+        var matchEvent = $(this).closest("tr").find("td:eq(1)").text().trim();
+        var matchClub = $(this).closest("tr").find("td:eq(2)").text().trim();
+        var matchName = $(this).closest("tr").find("td:eq(3)").text().trim();
+        var matchId = $(this).closest("tr").attr("data-index");
+
+        chrome.storage.sync.get("watchedMatches", function (data) {
+          var watchedMatches = data.watchedMatches || [];
+
+          // Check if the match is already in the watched list
+          var matchIndex = watchedMatches.findIndex(function (match) {
+            return match.id === matchId;
+          });
+
+          if (matchIndex === -1) {
+            // Match not found in watched list, so add it
+            var match = {
+              date: matchDate,
+              event: matchEvent,
+              club: matchClub,
+              name: matchName,
+              id: matchId,
+            };
+
+            watchedMatches.push(match);
+
+            chrome.storage.sync.set({ watchedMatches: watchedMatches }, function () {
+              console.log("Match added to watched matches:", match);
+            });
+            // Update the button text and class
+            $(event.target).addClass("watch-row").text("unwatch")
+          } else {
+            // Match found in watched list, so remove it
+            watchedMatches.splice(matchIndex, 1);
+
+            chrome.storage.sync.set({ watchedMatches: watchedMatches }, function () {
+              console.log("Match removed from watched matches:", matchId);
+            });
+            // Update the button text and class
+            $(event.target).removeClass("watch-row").text("watch")
+          }
+        });
+      });
+
+    // Check if the match is already in the watched list and update the button text and class accordingly
+    var matchId = $(this).attr("data-index");
+    chrome.storage.sync.get("watchedMatches", function (data) {
+      var watchedMatches = data.watchedMatches || [];
+
+      var matchIndex = watchedMatches.findIndex(function (match) {
+        return match.id === matchId;
+      });
+
+      if (matchIndex !== -1) {
+        // Match found in watched list, so update the button text and class
+        $button.addClass("watch-row").text("unwatch");
+      }
+    });
+
+    var $lastTd = $(this).find('td:last');
+    // Append the button to a new td element and append the td to the current row
+    $lastTd.text('')
+      .append($button);
   });
 }

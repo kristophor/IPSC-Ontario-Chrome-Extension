@@ -5,3 +5,11 @@
 .light-orange {
     background-color: #ffd700;
 }
+.watch-button {
+    background-color: transparent;
+    border: none;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+  }

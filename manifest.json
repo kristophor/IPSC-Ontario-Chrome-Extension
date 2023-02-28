@@ -8,6 +8,12 @@
         "48": "icon.png",
         "128": "icon.png"
     },
+    "permissions": [
+        "storage"
+    ],
+    "background": {
+        "service_worker": "background.js"
+      },
     "content_scripts": [
         {
             "matches": [
@@ -28,5 +34,11 @@
                 "lib/content.css"
             ]
         }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["watched.html"],
+        "matches": ["https://reg.ipsc-ont.org/*"]
+      }
     ]
 }
